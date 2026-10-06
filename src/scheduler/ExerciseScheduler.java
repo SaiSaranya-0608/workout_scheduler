@@ -25,7 +25,7 @@ public class ExerciseScheduler {
             return 0;
         }
 
-        return exercises.size() / totalWorkoutDays;
+        return (int) Math.ceil((double) exercises.size() / totalWorkoutDays);
     }
 
     public void displaySchduledExercises() {
