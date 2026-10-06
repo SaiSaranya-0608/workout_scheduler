@@ -51,4 +51,25 @@ public class ExerciseScheduler {
         System.out.println("Number of exercises: " + exercisesPerDay);
         System.out.println("Total time: " + cumulativeTime + " minutes");
     }
-}
+    public List<Workout> getWorkoutSchedule(HealthGoal healthGoal) {
+        List<Workout> schedule = new ArrayList<>();
+    
+        int perDay = computeNoOFExercisesperday();
+        int totalWorkoutDays = ((targetDays + 6) / 7) * daysPerWeek;
+    
+        if (perDay == 0) {
+            return schedule;   
+        }
+    
+        for (int day = 0; day < totalWorkoutDays; day++) {
+            int start = day * perDay;
+            int end = start + perDay;
+    
+            List<Exercise> dayExercises = new ArrayList<>(exercises.subList(start, end));
+    
+            schedule.add(new Workout(day + 1, healthGoal, dayExercises));
+        }
+    
+        return schedule;
+        }
+    }
