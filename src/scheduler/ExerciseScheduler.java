@@ -51,25 +51,25 @@ public class ExerciseScheduler {
         System.out.println("Number of exercises: " + exercisesPerDay);
         System.out.println("Total time: " + cumulativeTime + " minutes");
     }
-    public List<Workout> getWorkoutSchedule(HealthGoal healthGoal) {
-        List<Workout> schedule = new ArrayList<>();
-    
-        int perDay = computeNoOFExercisesperday();
-        int totalWorkoutDays = ((targetDays + 6) / 7) * daysPerWeek;
-    
-        if (perDay == 0) {
-            return schedule;   
+         public List<Workout> getWorkoutSchedule(HealthGoal healthGoal) 
+         {
+            List<Workout> schedule = new ArrayList<>();
+            int totalWorkoutDays = ((targetDays + 6) / 7) * daysPerWeek;
+            
+            if (totalWorkoutDays == 0 || exercises.isEmpty()) {
+                return schedule;
+            }
+            int workoutDays = Math.min(totalWorkoutDays, exercises.size());
+            int perDay = exercises.size() / workoutDays;
+            int extra = exercises.size() % workoutDays; 
+            int start = 0;
+            for (int day = 0; day < workoutDays; day++) {
+                int count = perDay + (day < extra ? 1 : 0);
+                int end = start + count;
+                List<Exercise> dayExercises = new ArrayList<>(exercises.subList(start, end));
+                schedule.add(new Workout(day + 1, healthGoal, dayExercises));
+                start = end;
+            }
+            return schedule;
         }
-    
-        for (int day = 0; day < totalWorkoutDays; day++) {
-            int start = day * perDay;
-            int end = start + perDay;
-    
-            List<Exercise> dayExercises = new ArrayList<>(exercises.subList(start, end));
-    
-            schedule.add(new Workout(day + 1, healthGoal, dayExercises));
-        }
-    
-        return schedule;
-        }
-    }
+      }
