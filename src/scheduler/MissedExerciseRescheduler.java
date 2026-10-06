@@ -94,6 +94,38 @@ public class MissedExerciseRescheduler {
                     + (missedExercises.size() - index));
         }
     }
+     public List<Workout> getRescheduledWorkouts(List<Exercise> missedExercises,
+                                            HealthGoal healthGoal,
+                                            int startWorkoutId)
+    {
+        List<Workout> rescheduled = new ArrayList<>();
+    
+        float minutesPerDay = hoursPerDay * 60;
+        int index = 0;
+    
+        for (int day = 0; day < noOfDays && index < missedExercises.size(); day++) {
+            List<Exercise> dayExercises = new ArrayList<>();
+            float used = 0;
+    
+            while (index < missedExercises.size()) {
+                Exercise ex = missedExercises.get(index);
+    
+                float needed = ex.getDurationMinutes() + (dayExercises.isEmpty() ? 0 : breakTime);
+    
+                if (used + needed > minutesPerDay && !dayExercises.isEmpty()) {
+                    break;
+                }
+    
+                dayExercises.add(ex);
+                used += needed;
+                index++;
+            }
+    
+            rescheduled.add(new Workout(startWorkoutId + day, healthGoal, dayExercises));
+        }
+    
+        return rescheduled;
+    }
 }
 
 
