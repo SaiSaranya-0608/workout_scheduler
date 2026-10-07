@@ -1,4 +1,4 @@
-git commit -m "Added my file"
+egit commit -m "Added my file"
 package scheduler;
 
 import exercises.Exercise;
@@ -110,7 +110,7 @@ public class MissedExerciseRescheduler {
             while (index < missedExercises.size()) {
                 Exercise ex = missedExercises.get(index);
     
-                float needed = ex.getDurationMinutes() + (dayExercises.isEmpty() ? 0 : breakTime);
+                float needed = ex.getDurationMinutes + (dayExercises.isEmpty() ? 0 : breakTime);
     
                 if (used + needed > minutesPerDay && !dayExercises.isEmpty()) {
                     break;
