@@ -26,7 +26,7 @@ public class MissedExerciseRescheduler {
         List<Exercise> missedExercises = new ArrayList<>();
 
         for (Exercise ex : exercises) {
-            if (!ex.isComplete()) {
+            if (!ex.isComplete) {
                 missedExercises.add(ex);
             }
         }
@@ -51,7 +51,7 @@ public class MissedExerciseRescheduler {
             while (index < missedExercises.size()) {
 
                 Exercise ex = missedExercises.get(index);
-                int duration = ex.getDurationMinutes();
+                int duration = ex.getDurationMinutes;
                 int timeNeeded = duration;
 
                 if (count > 0) {
