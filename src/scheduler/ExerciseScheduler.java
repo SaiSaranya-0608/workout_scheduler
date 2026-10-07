@@ -36,14 +36,14 @@ public class ExerciseScheduler {
         for (int i = 0; i < exercisesPerDay && i < exercises.size(); i++) {
 
             Exercise ex = exercises.get(i);
-            int duration = ex.getDurationMinutes();
+            int duration = ex.durationMinutes;
 
             if (i > 0) {
                 cumulativeTime += breakTime;
                 System.out.println("Break: " + breakTime + " minutes");
             }
 
-            System.out.println(ex.getName() + " - " + duration + " minutes");
+            System.out.println(ex.name + " - " + duration + " minutes");
 
             cumulativeTime += duration;
         }
