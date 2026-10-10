@@ -4,110 +4,174 @@ import assigners.*;
 import workouts.*;
 import tracker.*;
 import analytics.*;
+import scheduler.*;
+import models.*;
+import controller.*;
+import exceptions.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Integrated Demonstration Class for Workout Scheduler & Performance Analyzer System.
+ * Main demonstration class for the Workout Management & Scheduler System.
+ * Demonstrates system operations with robust try-catch exception handling.
  */
 public class Main {
     public static void main(String[] args) {
         System.out.println("==================================================================");
-        System.out.println("   WORKOUT SCHEDULER & PERFORMANCE ANALYZER - INTEGRATED SYSTEM   ");
+        System.out.println("            WORKOUT MANAGEMENT & SCHEDULER SYSTEM                 ");
         System.out.println("==================================================================\n");
 
-        // 1. Health Goals Validation
-        System.out.println(">>> 1. TESTING HEALTH GOALS & REALISTIC GOAL VALIDATION <<<\n");
+        Controller controller = new Controller();
 
-        HealthGoal weightLossGoal = new WeightLossGoal("Weight Loss Goal", 60, 70.0f, 80.0f, 1.0f);
-        weightLossGoal.displayGoal();
-        System.out.println("Is Realistic Goal? " + weightLossGoal.isRealisticGoal());
+        // ------------------------------------------------------------------
+        // 1. HEALTH GOAL & USER PROFILE SETUP WITH VALIDATION
+        // ------------------------------------------------------------------
+        System.out.println(">>> 1. USER REGISTRATION & HEALTH GOAL SETUP <<<\n");
+
+        HealthGoal weightLossGoal = null;
+        try {
+            weightLossGoal = new WeightLossGoal("Weight Loss Goal", 60, 70.0f, 80.0f, 1.0f);
+            weightLossGoal.displayGoal();
+            System.out.println("Is Goal Realistic? " + weightLossGoal.isRealisticGoal());
+        } catch (Exception e) {
+            System.err.println("Error initializing health goal: " + e.getMessage());
+        }
+
+        System.out.println();
+
+        // Demonstration of user registration error handling (Invalid input attempt)
+        try {
+            System.out.println("Validating user registration details for new account...");
+            // Attempting to register user with invalid age
+            User invalidUser = new User("John Doe", -5, 75.0f, 175.0f, weightLossGoal, 4, 1.5f);
+        } catch (InvalidUserDataException e) {
+            System.out.println("Registration Validation Notice: " + e.getMessage());
+        } catch (InvalidGoalException e) {
+            System.out.println("Goal Validation Notice: " + e.getMessage());
+        }
+
+        System.out.println();
+
+        // Registering a valid user profile
+        User mainUser = null;
+        try {
+            System.out.println("Registering user profile...");
+            mainUser = new User("Sai Saranya", 22, 65.0f, 168.0f, false, weightLossGoal, 5, 1.5f);
+            mainUser.displayUserProfile();
+        } catch (WorkoutSchedulerException e) {
+            System.err.println("User profile registration failed: " + e.getMessage());
+            return;
+        }
 
         System.out.println("\n------------------------------------------------------------------\n");
 
-        // 2. Regular & Additional Exercise Assigners
-        System.out.println(">>> 2. TESTING EXERCISE ASSIGNERS <<<\n");
+        // ------------------------------------------------------------------
+        // 2. EXERCISE ASSIGNMENT & WORKOUT SCHEDULING
+        // ------------------------------------------------------------------
+        System.out.println(">>> 2. EXERCISE ASSIGNMENT & WORKOUT SCHEDULING <<<\n");
 
-        ExerciseAssigner regularAssigner = new RegularExerciseAssigner();
-        regularAssigner.setExercisesAssigned(false, weightLossGoal);
-        List<Exercise> assignedExercises = regularAssigner.getExerciseAssigned();
+        List<Exercise> assignedExercises = new ArrayList<>();
+        try {
+            assignedExercises = controller.assignExercises(mainUser);
+            System.out.println("Assigned " + assignedExercises.size() + " regular exercises for " + mainUser.getName() + ":");
+            for (Exercise ex : assignedExercises) {
+                System.out.println("  - " + ex.getName() + " (" + ex.getDurationMinutes() + " mins, " + ex.getSetsCount() + " sets x " + ex.getRepsCount() + " reps)");
+            }
 
-        System.out.println("Assigned " + assignedExercises.size() + " regular exercises:");
-        for (Exercise ex : assignedExercises) {
-            ex.displayExercise();
-            System.out.println();
-        }
+            System.out.println("\nGenerating user Workout Plan...");
+            WorkoutPlan workoutPlan = controller.createWorkoutPlan(mainUser);
+            System.out.println("Successfully generated Workout Plan containing " + workoutPlan.getWorkouts().size() + " workout sessions.");
 
-        System.out.println("------------------------------------------------------------------\n");
+            ExerciseScheduler scheduler = new ExerciseScheduler(assignedExercises, weightLossGoal.getTargetDays(), mainUser.getDaysPerWeek());
+            System.out.println("Daily Exercise Quota: " + scheduler.computeNoOFExercisesperday() + " exercise(s) per day.");
 
-        // 3. Testing Workout Class
-        System.out.println(">>> 3. TESTING WORKOUT SESSION MANAGEMENT <<<\n");
-
-        Workout workoutSession = new Workout(101, weightLossGoal, assignedExercises);
-        System.out.println("Workout ID: " + workoutSession.getWorkoutId());
-        System.out.println("Calculated Total Workout Duration: " + workoutSession.getWorkoutMinutes() + " mins");
-
-        // Mark exercise with ID 101 as completed
-        System.out.println("\nMarking Exercise ID 101 as completed...");
-        workoutSession.markCompletedExercise(101);
-
-        System.out.println("\nUpdated Exercise Completion Statuses:");
-        for (Exercise ex : workoutSession.getExercises()) {
-            System.out.println("- " + ex.getName() + ": " + (ex.isComplete() ? "Completed" : "Pending"));
+            System.out.println("\n--- Initial Scheduled Workout Days ---");
+            List<Workout> scheduledWorkouts = scheduler.getWorkoutSchedule(weightLossGoal);
+            for (Workout w : scheduledWorkouts) {
+                System.out.println("Session #" + w.getWorkoutId() + " (" + w.getWorkoutMinutes() + " mins total):");
+                for (Exercise ex : w.getExercises()) {
+                    System.out.println("   * " + ex.getName() + " [" + ex.getDurationMinutes() + " mins]");
+                }
+            }
+        } catch (InvalidUserDataException e) {
+            System.err.println("Scheduling error: " + e.getMessage());
         }
 
         System.out.println("\n------------------------------------------------------------------\n");
 
-        // 4. Testing Workout History Tracking
-        System.out.println(">>> 4. TESTING WORKOUT HISTORY TRACKING <<<\n");
+        // ------------------------------------------------------------------
+        // 3. WORKOUT SESSION TRACKING & COMPLETION
+        // ------------------------------------------------------------------
+        System.out.println(">>> 3. WORKOUT SESSION TRACKING & COMPLETION <<<\n");
 
-        WorkoutHistory history = new WorkoutHistory();
+        try {
+            Workout currentSession = new Workout(101, weightLossGoal, assignedExercises);
+            System.out.println("Active Session ID: " + currentSession.getWorkoutId());
 
-        // Session 1: 1 Completed, 1 Missed
-        List<Exercise> s1Completed = new ArrayList<>();
-        List<Exercise> s1Missed = new ArrayList<>();
-        if (!assignedExercises.isEmpty()) {
-            s1Completed.add(assignedExercises.get(0));
+            if (!assignedExercises.isEmpty()) {
+                int exIdToComplete = assignedExercises.get(0).getExerciseId();
+                System.out.println("Logging exercise completion...");
+                controller.completeExercise(currentSession, exIdToComplete);
+            }
+
+            System.out.println("\nExercise Status Summary:");
+            for (Exercise ex : currentSession.getExercises()) {
+                System.out.println("  - " + ex.getName() + ": " + (ex.isComplete() ? "[COMPLETED]" : "[PENDING]"));
+            }
+        } catch (Exception e) {
+            System.err.println("Workout tracking error: " + e.getMessage());
         }
-        if (assignedExercises.size() > 1) {
-            s1Missed.add(assignedExercises.get(1));
+
+        System.out.println("\n------------------------------------------------------------------\n");
+
+        // ------------------------------------------------------------------
+        // 4. MISSED EXERCISE RESCHEDULING & HISTORY
+        // ------------------------------------------------------------------
+        System.out.println(">>> 4. MISSED EXERCISE RESCHEDULING & HISTORY LOGGING <<<\n");
+
+        try {
+            WorkoutHistory history = mainUser.getWorkoutHistory();
+
+            List<Exercise> completed = new ArrayList<>();
+            List<Exercise> missed = new ArrayList<>();
+            if (assignedExercises.size() > 0) completed.add(assignedExercises.get(0));
+            if (assignedExercises.size() > 1) missed.add(assignedExercises.get(1));
+            history.addWorkoutRecord(completed, missed);
+
+            controller.rescheduleMissedExercises(mainUser, 3, 1.5f);
+        } catch (InvalidUserDataException e) {
+            System.err.println("Rescheduling error: " + e.getMessage());
         }
-        history.addWorkoutRecord(s1Completed, s1Missed);
 
-        // Session 2: 2 Completed, 0 Missed
-        List<Exercise> s2Completed = new ArrayList<>(assignedExercises);
-        List<Exercise> s2Missed = new ArrayList<>();
-        history.addWorkoutRecord(s2Completed, s2Missed);
+        System.out.println("\n------------------------------------------------------------------\n");
 
-        // Print History Report
-        System.out.println(history.generateHistoryReport(5001));
+        // ------------------------------------------------------------------
+        // 5. SYSTEM RECOMMENDATION REPORT & CALORIE ANALYSIS
+        // ------------------------------------------------------------------
+        System.out.println(">>> 5. SYSTEM RECOMMENDATION REPORT & CALORIE ANALYSIS <<<\n");
 
-        System.out.println("------------------------------------------------------------------\n");
+        try {
+            String report = controller.getRecommendation(mainUser);
+            System.out.println(report);
 
-        // 5. Testing Workout Performance Analyzer & Calorie Tracker
-        System.out.println(">>> 5. TESTING WORKOUT PERFORMANCE ANALYZER <<<\n");
+            System.out.println("=== Calorie Calculator Evaluation ===");
+            CalorieCalculator<Exercise> calorieCalc = new CalorieCalculator<>();
 
-        WorkoutPerformanceAnalyzer analyzer = new WorkoutPerformanceAnalyzer();
+            WeightLossExercise lossEx = new WeightLossExercise(201, "HIIT Cardio", 35, 4, 20, "HIIT", 8.0f);
+            float lossCals = calorieCalc.calculateCalories(lossEx);
+            System.out.println("HIIT Cardio Burned Calories: " + lossCals + " kcal");
 
-        float completionRate = analyzer.getCompletionRate(history);
-        System.out.println("Overall Completion Rate: " + String.format("%.2f", completionRate) + "%");
-        System.out.println("Completion Rate Insight: " + analyzer.analyzeCompletionRate(completionRate));
+            WeightGainExercise gainEx = new WeightGainExercise(202, "Bench Press", 45, 5, 10, 80.0f, "Barbell", 7.5f);
+            float gainCals = calorieCalc.calculateCalories(gainEx);
+            System.out.println("Bench Press Burned Calories: " + gainCals + " kcal");
 
-        int currentStreak = analyzer.getCurrentStreak(history);
-        System.out.println("\nCurrent Active Streak: " + currentStreak + " session(s)");
-        System.out.println("Streak Feedback: " + analyzer.analyzeCurrentStreak(currentStreak));
-
-        System.out.println("\nBest Performing Session: " + analyzer.getBestPerformingDay(history));
-
-        // Calorie Tracker
-        CalorieTracker tracker = new CalorieTracker(2000.0f, 1600.0f);
-        tracker.logCalorieBurn(400.0f);
-        tracker.logCalorieBurn(480.0f);
-        System.out.println("Calorie Progress Trend : " + analyzer.getProgressTrend(tracker));
+        } catch (InvalidUserDataException e) {
+            System.err.println("Recommendation generation error: " + e.getMessage());
+        }
 
         System.out.println("\n==================================================================");
-        System.out.println("             SYSTEM VERIFICATION COMPLETED SUCCESSFULLY            ");
+        System.out.println("                   SYSTEM EXECUTION COMPLETE                      ");
         System.out.println("==================================================================");
     }
 }
